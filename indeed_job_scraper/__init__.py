@@ -47,8 +47,7 @@ class Scraper:
         elif platform.system() == 'Darwin':
             self.driver = webdriver.Chrome("./driver/chromedriver", chrome_options=self.chromeOptions)
         else:
-            raise Exception('The program does not support ' + platform.system() + '. Try the latest version'
-                                                                                  'of the program')
+            raise Exception('The program does not support ' + platform.system() + '. Try the latest version')
 
     # Finding the data frame columns
     def _find_cols(self, soup, job):
@@ -70,7 +69,7 @@ class Scraper:
         # salary
         try:
             salary = soup.find(class_="salary").text.replace('\n', '')
-        except selenium.common.exceptions.NoSuchElementException:
+        except selenium.common.exceptions.NoSuchElementException and AttributeError:
             salary = 'None'
         # Description
         sum_div = job.find_elements_by_class_name('jobtitle')[0]
@@ -81,7 +80,8 @@ class Scraper:
         try:
             job_desc = self.driver.find_element_by_id('vjs-desc').text
         except selenium.common.exceptions.NoSuchElementException:
-            self.driver.implicitly_wait(6)
+            sum_div.click()
+            self.driver.implicitly_wait(2)
             job_desc = self.driver.find_element_by_id('vjs-desc').text
 
         return title, location, company, salary, job_desc
@@ -153,4 +153,4 @@ class Scraper:
         except selenium.common.exceptions.ElementClickInterceptedException:
             element = self.driver.find_element_by_id('onetrust-accept-btn-handler')
             ed = ActionChains(self.driver)
-            ed.move_to_element(element).move_by_offset(1529, 975).click().perform()
+            ed.move_to_element(element).move_by_offset(0, 5).click().perform()
