@@ -101,44 +101,13 @@ class Scraper:
         try:
             close = self.driver.find_element_by_xpath('//*[@id="popover-x"]/a')
             close.click()
-        except:
+        except selenium.common.exceptions.NoSuchElementException:
             pass
 
     # Main Scrap function
     def scrap_data(self):
-        for search in self.search_terms:
-            try:
-                url = "https://www.indeed.co.uk/jobs?q=" + search + "&l=United+Kingdom"
-                self.driver.get(url)
-                pageCount_txt = self.driver.find_element_by_id('searchCountPages').text
-                try:
-                    pageCount = int(re.match('Page 1 of (\S+) jobs', pageCount_txt).group(1))
-                except ValueError:
-                    pageCount = re.match('Page 1 of (\S+) jobs', pageCount_txt).group(1)
-                    pageCount = int(pageCount.replace(',', ''))
-                print("Total number of jobs available is " + str(pageCount))
-            except selenium.common.exceptions.NoSuchElementException:
-                self.driver.quit()
-                raise Exception('No result found at keyword ' + search + ' please try different keywords')
-
-            for i in np.arange(0, pageCount, 10):
-                if self.stop_flag:
-                    break
-                if i == 0:
-                    self._accept_cookies()
-                else:
-                    url = "https://www.indeed.co.uk/jobs?q=" + search + "&l=United+Kingdom&start=" + str(i)
-                    self.driver.get(url)
-                self.driver.implicitly_wait(4)
-
-                print('Loading ' + str(i / pageCount * 100) + '%')
-
-                # First check popover then scrap the page
-                self._check_popover()
-                self._scrap()
-
-                if pageCount - i <= 10:
-                    break
+        for term in self.search_terms:
+            self._search_the_term(term)
         self.driver.quit()
 
     def _accept_cookies(self):
@@ -170,3 +139,46 @@ class Scraper:
             self.driver.implicitly_wait(2)
             job_desc = self.driver.find_element_by_id('vjs-desc').text
         return job_desc
+
+    def _search_the_term(self, term):
+        self._get_the_main_page(term)
+
+        for i in np.arange(0, self.pageCount, 10):
+            self._fetch_a_page(i, term)
+            if self.pageCount - i <= 10:
+                break
+
+    def _find_page_count(self):
+        pageCount_txt = self.driver.find_element_by_id('searchCountPages').text
+        try:
+            pageCount = int(re.match('Page 1 of (\S+) jobs', pageCount_txt).group(1))
+        except ValueError:
+            pageCount = re.match('Page 1 of (\S+) jobs', pageCount_txt).group(1)
+            pageCount = int(pageCount.replace(',', ''))
+        print("Total number of jobs available is " + str(pageCount))
+        self.pageCount = pageCount
+
+    def _get_the_main_page(self, term):
+        url = "https://www.indeed.co.uk/jobs?q=" + term + "&l=United+Kingdom"
+        self.driver.get(url)
+        try:
+            self._find_page_count()
+        except selenium.common.exceptions.NoSuchElementException:
+            self.driver.quit()
+            raise Exception('No result found at keyword ' + term + ' please try different keywords')
+
+    def _fetch_a_page(self, i, term):
+        if self.stop_flag:
+            raise Exception('stopped by stop flag')
+        if i == 0:
+            self._accept_cookies()
+        else:
+            url = "https://www.indeed.co.uk/jobs?q=" + term + "&l=United+Kingdom&start=" + str(i)
+            self.driver.get(url)
+        self.driver.implicitly_wait(4)
+
+        print('Loading ' + str(i / self.pageCount * 100) + '%')
+
+        # First check popover then scrap the page
+        self._check_popover()
+        self._scrap()
