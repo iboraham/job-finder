@@ -36,6 +36,27 @@ class Scraper:
         self._start_driver()
         self.stop_flag = False
 
+    def _fetch_company(self):
+        try:
+            company = self.soup.find(class_="company").text.replace("\n", "").strip()
+        except selenium.common.exceptions.NoSuchElementException:
+            company = 'None'
+        return company
+
+    def _fetch_title(self):
+        try:
+            title = self.soup.find("a", class_="jobtitle").text.replace('\n', '')
+        except selenium.common.exceptions.NoSuchElementException:
+            title = 'None'
+        return title
+
+    def _fetch_location(self):
+        try:
+            location = self.soup.find(class_="location").text
+        except selenium.common.exceptions.NoSuchElementException:
+            location = 'None'
+        return location
+
     # Start driver
     def _start_driver(self):
         if self.start_invisible:
@@ -50,39 +71,13 @@ class Scraper:
             raise Exception('The program does not support ' + platform.system() + '. Try the latest version')
 
     # Finding the data frame columns
-    def _find_cols(self, soup, job):
-        # Title
-        try:
-            title = soup.find("a", class_="jobtitle").text.replace('\n', '')
-        except selenium.common.exceptions.NoSuchElementException:
-            title = 'None'
-        # location
-        try:
-            location = soup.find(class_="location").text
-        except selenium.common.exceptions.NoSuchElementException:
-            location = 'None'
-        # company
-        try:
-            company = soup.find(class_="company").text.replace("\n", "").strip()
-        except selenium.common.exceptions.NoSuchElementException:
-            company = 'None'
-        # salary
-        try:
-            salary = soup.find(class_="salary").text.replace('\n', '')
-        except selenium.common.exceptions.NoSuchElementException and AttributeError:
-            salary = 'None'
-        # Description
-        sum_div = job.find_elements_by_class_name('jobtitle')[0]
-        sum_div.click()
+    def _find_cols(self, job):
 
-        if len(self.driver.window_handles) > 1:
-            self.driver.switch_to.window(self.driver.window_handles[0])
-        try:
-            job_desc = self.driver.find_element_by_id('vjs-desc').text
-        except selenium.common.exceptions.NoSuchElementException:
-            sum_div.click()
-            self.driver.implicitly_wait(2)
-            job_desc = self.driver.find_element_by_id('vjs-desc').text
+        title = self._fetch_title()
+        location = self._fetch_location()
+        company = self._fetch_company()
+        salary = self._fetch_salary()
+        job_desc = self._fetch_description(job)
 
         return title, location, company, salary, job_desc
 
@@ -96,7 +91,7 @@ class Scraper:
             soup = BeautifulSoup(result_html, 'html.parser')
 
             self._check_popover()
-            title, location, company, salary, job_desc = self._find_cols(soup, job)
+            title, location, company, salary, job_desc = self._find_cols(job)
 
             self.df = self.df.append({'Title': title, 'Location': location, 'Company': company,
                                       "Description": job_desc}, ignore_index=True)
@@ -154,3 +149,24 @@ class Scraper:
             element = self.driver.find_element_by_id('onetrust-accept-btn-handler')
             ed = ActionChains(self.driver)
             ed.move_to_element(element).move_by_offset(0, 5).click().perform()
+
+    def _fetch_salary(self):
+        try:
+            salary = self.soup.find(class_="salary").text.replace('\n', '')
+        except selenium.common.exceptions.NoSuchElementException and AttributeError:
+            salary = 'None'
+        return salary
+
+    def _fetch_description(self, job):
+        sum_div = job.find_elements_by_class_name('summary')[0]
+        sum_div.click()
+
+        if len(self.driver.window_handles) > 1:
+            self.driver.switch_to.window(self.driver.window_handles[0])
+        try:
+            job_desc = self.driver.find_element_by_id('vjs-desc').text
+        except selenium.common.exceptions.NoSuchElementException:
+            sum_div.click()
+            self.driver.implicitly_wait(2)
+            job_desc = self.driver.find_element_by_id('vjs-desc').text
+        return job_desc
