@@ -14,8 +14,8 @@ import platform
 
 # Edit the user input
 def _edit_terms(txt):
-    txt.replace(' ', '+')
-    terms_array = txt.split(',')
+    terms_array = txt.split(', ')
+    terms_array = [term.replace(' ', '+') for term in terms_array]
     return terms_array
 
 
@@ -23,7 +23,7 @@ class Scraper:
     """
     Scraper that finds ["Title", "Location", "Company", "Salary", "Description"]'s of the jobs.
     It is only work for indeed.co.uk.
-    It means this class only works in United Kingdom.
+    Though, this module only works in United Kingdom.
     """
 
     def __init__(self, search_terms_txt, website='indeed', start_invisible=False):
