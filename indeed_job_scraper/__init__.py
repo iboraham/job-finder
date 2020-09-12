@@ -60,6 +60,8 @@ class Scraper:
     # Start driver
     def _start_driver(self):
         if self.start_invisible:
+            self.chromeOptions.add_argument("--window-size=1920,1080")
+            self.chromeOptions.add_argument("--start-maximized")
             self.chromeOptions.add_argument("--headless")
         else:
             self.chromeOptions.add_argument("--start-maximized")
