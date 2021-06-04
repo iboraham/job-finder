@@ -102,9 +102,11 @@ class Scraper:
     def _check_popover(self):
         try:
             close = self.driver.find_element_by_xpath('//*[@id="popover-x"]/a')
-            close.click()
-        except selenium.common.exceptions.NoSuchElementException \
-               or selenium.common.exceptions.ElementNotInteractableException:
+            try:
+                close.click()
+            except selenium.common.exceptions.ElementNotInteractableException:
+                pass
+        except selenium.common.exceptions.NoSuchElementException:
             pass
 
     # Main Scrap function
