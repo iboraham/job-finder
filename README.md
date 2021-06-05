@@ -28,7 +28,7 @@ git clone https://github.com/iboraham/job-finder.git
 ## Usage
 
 ```sh
-python finder.py
+python finder.py --search=Data+Scientist --cv-url=www.github.com/iboraham/cv/cv.pdf
 ```
 
 ## Run tests
