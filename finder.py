@@ -14,8 +14,7 @@ def main(args):
     df = sc.df.copy()
 
     # Read CV
-    cv = CV(cv_url)
-    cv.read_cv()
+    cv = CV(cv_url).get_cv()
 
     # NLP
     # Need update here... (word2vec -> similarity calculation)
